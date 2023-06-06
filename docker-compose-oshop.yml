@@ -1,0 +1,45 @@
+version: '1'
+
+services:
+  db:
+    image: mysql
+    restart: always
+    container_name: oshop_mysql
+    networks:
+      - oshop-mysql
+    volumes:
+      - "../data/db/mysql/oshop:/var/lib/mysql"
+    ports:
+      - "3306:3306"
+    environment:
+      - MYSQL_ROOT_PASSWORD=welcome1db
+      - MYSQL_DATABASE=oshopdb
+      - MYSQL_USER=oshop_user
+      - MYSQL_PASSWORD=oshoppwd
+    healthcheck:
+        test: ["CMD", "mysqladmin" ,"ping", "-h", "localhost"]
+        timeout: 2s
+        retries: 1
+  app:
+    image: online-shopping:1.0.0-SNAPSHOT
+    ports:
+      - "9090:9090"
+    networks:
+      - oshop-mysql
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      - SPRING.PROFILES.ACTIVE=dev
+      - DB_SERVICE=db
+      - DISCOVERY_SERVER=eureka
+  eureka:
+    image: eureka-server:1.0.0-SNAPSHOT
+    ports:
+      - "8761:8761"
+    networks:
+      - oshop-mysql
+    environment:
+      - SPRING.PROFILES.ACTIVE=dev      
+networks:
+  oshop-mysql:
